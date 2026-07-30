@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Black Hole Raytracer & Gravity Simulator</title>
+    <meta name="description" content="Interactive 3D Schwarzschild Black Hole raytracer with real-time WebGL2 gravitational lensing and relativistic Doppler shift physics.">
+    
+    <!-- Clean Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Minimalist Design System -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- WebGL Canvas Container -->
+    <div id="canvas-container">
+        <canvas id="webgl-canvas"></canvas>
+    </div>
+
+    <!-- Top Navigation Header -->
+    <header id="top-hud">
+        <div class="brand-badge">
+            <div class="brand-dot"></div>
+            <div>
+                <div class="brand-title">Event Horizon 3D</div>
+                <div class="brand-subtitle">Schwarzschild Simulation</div>
+            </div>
+        </div>
+
+        <div class="hud-actions">
+            <button id="btn-audio" class="btn-action" title="Toggle Ambient Audio">Audio</button>
+            <button id="btn-guide" class="btn-action" title="Physics Guide">Guide</button>
+            <button id="btn-screenshot" class="btn-action" title="Capture Render Snapshot">Export</button>
+            <button id="sidebar-toggle" class="btn-action active" title="Toggle Controls Sidebar">Controls</button>
+        </div>
+    </header>
+
+    <!-- Bottom Stats Overlay -->
+    <div id="stats-hud">
+        <div class="stat-item">
+            <span class="stat-lbl">FPS</span>
+            <span id="stat-fps" class="stat-val">60</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <span class="stat-lbl">Distance</span>
+            <span id="stat-dist" class="stat-val">63.4M km</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <span class="stat-lbl">R_s</span>
+            <span id="stat-rs" class="stat-val">11.8M km</span>
+        </div>
+    </div>
+
+    <!-- Minimalist Control Sidebar -->
+    <aside id="control-sidebar">
+        <div class="panel-header">
+            <h2>Simulator Controls</h2>
+            <button id="sidebar-close" class="btn-close" title="Close Panel">✕</button>
+        </div>
+
+        <!-- Segmented Tab Switcher -->
+        <nav class="tab-switcher">
+            <button class="tab-btn active" data-tab="physics">Physics</button>
+            <button class="tab-btn" data-tab="visuals">Visuals</button>
+            <button class="tab-btn" data-tab="presets">Presets</button>
+        </nav>
+
+        <!-- Panel Body -->
+        <div class="panel-body">
+            
+            <!-- Tab 1: Physics Controls -->
+            <div id="tab-physics" class="tab-content active">
+                <div class="field-group">
+                    <div class="field-label">
+                        <span>Mass (M☉)</span>
+                        <span id="mass-slider-val" class="field-value">4.0 M☉</span>
+                    </div>
+                    <input type="range" id="mass-slider" min="1.0" max="10.0" step="0.1" value="4.0">
+                </div>
+
+                <div class="toggle-row">
+                    <span class="field-label">N-Body Orbit Physics</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-gravity" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row">
+                    <span class="field-label">Spacetime Mesh Overlay</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-grid">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-row">
+                    <span class="field-label">Auto-Rotate Camera</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-rotate">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Tab 2: Visual & Shader Controls -->
+            <div id="tab-visuals" class="tab-content">
+                <div class="field-group">
+                    <span class="field-label">Accretion Disk Palette</span>
+                    <div class="palette-row">
+                        <button class="palette-btn active" data-palette="0">Gold</button>
+                        <button class="palette-btn" data-palette="1">Cyan</button>
+                        <button class="palette-btn" data-palette="2">Plasma</button>
+                        <button class="palette-btn" data-palette="3">Inferno</button>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label">
+                        <span>Relativistic Doppler Beaming</span>
+                        <span id="doppler-slider-val" class="field-value">1.0</span>
+                    </div>
+                    <input type="range" id="doppler-slider" min="0.0" max="2.0" step="0.1" value="1.0">
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label">
+                        <span>Photon Ring Intensity</span>
+                        <span id="ring-slider-val" class="field-value">1.5</span>
+                    </div>
+                    <input type="range" id="ring-slider" min="0.0" max="3.0" step="0.1" value="1.5">
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label">
+                        <span>Starfield Density</span>
+                        <span id="stars-slider-val" class="field-value">1.0</span>
+                    </div>
+                    <input type="range" id="stars-slider" min="0.5" max="3.0" step="0.1" value="1.0">
+                </div>
+            </div>
+
+            <!-- Tab 3: Presets -->
+            <div id="tab-presets" class="tab-content">
+                <div class="preset-list">
+                    <div class="preset-item active preset-card" data-preset="gargantua">
+                        <div class="preset-name">Gargantua</div>
+                        <div class="preset-sub">Golden disk with relativistic Doppler beaming</div>
+                    </div>
+                    <div class="preset-item preset-card" data-preset="m87">
+                        <div class="preset-name">Supermassive M87*</div>
+                        <div class="preset-sub">Deep red accretion halo and photon sphere</div>
+                    </div>
+                    <div class="preset-item preset-card" data-preset="cyan">
+                        <div class="preset-name">Cyber Quasar</div>
+                        <div class="preset-sub">High-energy cyan plasma radiation disk</div>
+                    </div>
+                    <div class="preset-item preset-card" data-preset="plasma">
+                        <div class="preset-name">Plasma Storm</div>
+                        <div class="preset-sub">Vibrant magenta-violet relativistic flow</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </aside>
+
+    <!-- Physics Information Modal -->
+    <div id="guide-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Physics & Relativistic Raytracing</h2>
+            <p>This application simulates general relativistic light deflection around a Schwarzschild black hole in real-time WebGL2.</p>
+            <ul>
+                <li><strong>Event Horizon ($R_s = 2GM/c^2$):</strong> The surface boundary where escape velocity equals the speed of light.</li>
+                <li><strong>Gravitational Lensing:</strong> Curvature of spacetime deflects light rays around the central mass.</li>
+                <li><strong>Photon Sphere ($1.5 R_s$):</strong> Unstable circular orbit for light, forming the bright ring around the shadow ($R_{shadow} \approx 2.65 R_s$).</li>
+                <li><strong>Doppler Beaming:</strong> Material approaching the viewer is blueshifted and amplified; material receding is dimmed and redshifted.</li>
+            </ul>
+            <button id="modal-close" class="btn-action active" style="width: 100%; justify-content: center; margin-top: 8px;">Close</button>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
