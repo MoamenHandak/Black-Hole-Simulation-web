@@ -526,3 +526,75 @@ input:checked + .toggle-slider:before {
   font-size: 12px;
   margin-bottom: 20px;
 }
+
+/* ==========================================================================
+   RESPONSIVE MOBILE & TABLET STYLES
+   ========================================================================== */
+@media (max-width: 768px) {
+  #top-hud {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+  }
+
+  .brand-badge {
+    padding: 6px 10px;
+  }
+
+  .brand-title {
+    font-size: 12px;
+  }
+
+  .brand-subtitle {
+    display: none;
+  }
+
+  .hud-actions {
+    gap: 4px;
+  }
+
+  .btn-action {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  #control-sidebar {
+    top: auto;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+    max-height: 70vh;
+    border-radius: var(--radius-lg);
+  }
+
+  #control-sidebar.collapsed {
+    transform: translateY(calc(100% + 24px));
+  }
+
+  #stats-hud {
+    bottom: 12px;
+    left: 12px;
+    padding: 6px 10px;
+    font-size: 10px;
+    gap: 8px;
+  }
+
+  .modal-content {
+    padding: 18px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-action {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  #stats-hud .stat-divider:nth-child(4),
+  #stats-hud .stat-item:nth-child(5) {
+    display: none;
+  }
+}

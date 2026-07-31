@@ -325,6 +325,17 @@ class App {
         this.gl.disable(this.gl.BLEND);
     }
 
+    resizeCanvas() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
+        const displayWidth = Math.floor(window.innerWidth * dpr);
+        const displayHeight = Math.floor(window.innerHeight * dpr);
+        if (this.canvas.width !== displayWidth || this.canvas.height !== displayHeight) {
+            this.canvas.width = displayWidth;
+            this.canvas.height = displayHeight;
+            this.gl.viewport(0, 0, displayWidth, displayHeight);
+        }
+    }
+
     setupEventListeners() {
         // Orbit Controls via Mouse Drag and Touch
         const handleDragStart = (x, y) => {
@@ -348,13 +359,44 @@ class App {
         window.addEventListener('mousemove', (e) => handleDragMove(e.clientX, e.clientY));
         window.addEventListener('mouseup', handleDragEnd);
 
+        // Mobile Touch Controls: 1-finger Orbit, 2-finger Pinch-to-Zoom
+        let initialTouchDist = 0;
+        let initialRadius = this.camRadius;
+
         this.canvas.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) handleDragStart(e.touches[0].clientX, e.touches[0].clientY);
-        });
+            if (e.touches.length === 1) {
+                handleDragStart(e.touches[0].clientX, e.touches[0].clientY);
+            } else if (e.touches.length === 2) {
+                this.isDragging = false;
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                initialTouchDist = Math.sqrt(dx * dx + dy * dy);
+                initialRadius = this.camRadius;
+            }
+        }, { passive: false });
+
         window.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 1) handleDragMove(e.touches[0].clientX, e.touches[0].clientY);
+            if (e.touches.length === 1 && this.isDragging) {
+                handleDragMove(e.touches[0].clientX, e.touches[0].clientY);
+            } else if (e.touches.length === 2 && initialTouchDist > 0) {
+                e.preventDefault();
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const scale = initialTouchDist / Math.max(dist, 1.0);
+                this.camRadius = Math.max(this.minRadius, Math.min(this.maxRadius, initialRadius * scale));
+                document.getElementById('stat-dist').textContent = `${(this.camRadius * 1e-9).toFixed(1)}M km`;
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', (e) => {
+            if (e.touches.length === 0) {
+                handleDragEnd();
+                initialTouchDist = 0;
+            } else if (e.touches.length === 1) {
+                handleDragStart(e.touches[0].clientX, e.touches[0].clientY);
+            }
         });
-        window.addEventListener('touchend', handleDragEnd);
 
         // Zoom via Mouse Wheel
         this.canvas.addEventListener('wheel', (e) => {
