@@ -214,9 +214,14 @@ bool sample_disk(vec3 unbent_dir, vec3 bent_dir, out vec3 color, out float hit_t
     if (abs(unbent_dir.y) > EPSILON) {
         float t_front = -cam_pos.y / unbent_dir.y;
         if (t_front > 0.0 && t_front < closest_t) {
-            point = cam_pos + unbent_dir * t_front;
-            hit_t = t_front;
-            valid_hit = true;
+            vec3 p = cam_pos + unbent_dir * t_front;
+            float r = length(p.xz);
+            // FIX: Only register a hit if it lands inside the disk bounds
+            if (r >= disk_r1 && r <= disk_r2) {
+                point = p;
+                hit_t = t_front;
+                valid_hit = true;
+            }
         }
     }
 
@@ -224,16 +229,22 @@ bool sample_disk(vec3 unbent_dir, vec3 bent_dir, out vec3 color, out float hit_t
     if (!valid_hit && abs(bent_dir.y) > EPSILON) {
         float t_back = -closest_point.y / bent_dir.y;
         if (t_back > 0.0) {
-            point = closest_point + bent_dir * t_back;
-            hit_t = closest_t + t_back;
-            valid_hit = true;
+            vec3 p = closest_point + bent_dir * t_back;
+            float r = length(p.xz);
+            // FIX: Only register a hit if it lands inside the disk bounds
+            if (r >= disk_r1 && r <= disk_r2) {
+                point = p;
+                hit_t = closest_t + t_back;
+                valid_hit = true;
+            }
         }
     }
 
     if (!valid_hit) return false;
 
     float radius = length(point.xz);
-    if (radius < disk_r1 || radius > disk_r2) return false;
+    // Note: The previous out-of-bounds check here has been removed 
+    // because we already validated the radius in the steps above.
 
     float radial = clamp((radius - disk_r1) / max(disk_r2 - disk_r1, EPSILON), 0.0, 1.0);
     float edge = smoothstep(disk_r1, disk_r1 * 1.08, radius) * (1.0 - smoothstep(disk_r2 * 0.92, disk_r2, radius));
