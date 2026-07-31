@@ -95,32 +95,50 @@ export class GravitySimulation {
  * 3D Spacetime Grid deformed by gravity well (Flamm's paraboloid embedding diagram approximation)
  */
 export class SpacetimeGrid {
-    static generateMesh(objects, gridSize = 36, spacing = 2.5e10) {
+    static generateMesh(objects, gridSize = 48, spacing = 2.0e10) {
         const vertices = [];
         const indices = [];
 
         const half = gridSize / 2;
         const gridPoints = [];
 
+        // Identify central black hole (highest mass object)
+        let centralObj = objects[0] || new ObjectData(new Vec3(), 1e9, [0,0,0,1], 4e30);
+        for (const obj of objects) {
+            if (obj.mass > centralObj.mass) centralObj = obj;
+        }
+
+        const bhRs = (2.0 * G * centralObj.mass) / (C * C) * 1.5e5;
+
         for (let z = 0; z <= gridSize; z++) {
             const row = [];
             for (let x = 0; x <= gridSize; x++) {
-                const wx = (x - half) * spacing;
-                const wz = (z - half) * spacing;
-                let height = 0.0;
+                let wx = (x - half) * spacing;
+                let wz = (z - half) * spacing;
 
+                // Central Black Hole Gravitational Funnel & Radial Pinching
+                const dx = wx - centralObj.position.x;
+                const dz = wz - centralObj.position.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                const normDist = dist / Math.max(bhRs, 1.0);
+
+                // Deep aggressive plunge: scales directly with Black Hole mass (bhRs)
+                let height = -Math.min(24.0 * bhRs, (18.0 * bhRs) / (Math.pow(normDist, 0.82) + 0.12));
+
+                // Radial mesh contraction toward the singularity
+                const pullFactor = Math.min(0.38, (0.45 * bhRs) / (dist + 0.5 * bhRs));
+                wx -= dx * pullFactor;
+                wz -= dz * pullFactor;
+
+                // Secondary gravity wells for orbiting planets/masses
                 for (const obj of objects) {
-                    const rs = (2.0 * G * obj.mass) / (C * C) * 1.5e5;
-                    const dx = wx - obj.position.x;
-                    const dz = wz - obj.position.z;
-                    const dist = Math.sqrt(dx * dx + dz * dz);
-                    
-                    // Gravitational potential well funnel (Flamm's embedding diagram)
-                    if (dist > rs) {
-                        height -= (3.8 * rs) / Math.sqrt((dist / rs) + 0.2);
-                    } else {
-                        height -= 3.8 * rs;
-                    }
+                    if (obj === centralObj) continue;
+                    const pdx = wx - obj.position.x;
+                    const pdz = wz - obj.position.z;
+                    const pdist = Math.sqrt(pdx * pdx + pdz * pdz);
+                    const massRatio = Math.min(1.0, obj.mass / centralObj.mass);
+                    const pWell = - (4.0 * bhRs * massRatio) / (Math.sqrt(pdist / Math.max(bhRs, 1.0) + 0.15));
+                    height += pWell;
                 }
 
                 row.push([wx, height, wz]);

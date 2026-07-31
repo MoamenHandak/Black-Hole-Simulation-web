@@ -147,9 +147,9 @@ class App {
 
     updateSpacetimeGridMesh() {
         const mesh = SpacetimeGrid.generateMesh(
-            [{ position: new Vec3(0, 0, 0), mass: this.blackHoleMass }],
-            36,
-            3.0e10
+            [new ObjectData(new Vec3(0, 0, 0), this.schwarzschildRadius, [0,0,0,1], this.blackHoleMass), ...this.objects],
+            48,
+            2.0e10
         );
 
         if (!this.gridVao) {
@@ -208,6 +208,9 @@ class App {
             // Sync positions back to object data
             for (let i = 0; i < this.objects.length; i++) {
                 this.objects[i] = this.sim.objects[i + 1];
+            }
+            if (this.showSpacetimeGrid) {
+                this.updateSpacetimeGridMesh();
             }
         }
 
