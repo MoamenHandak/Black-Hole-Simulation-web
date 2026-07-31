@@ -24,7 +24,7 @@ class App {
         this.camTarget = new Vec3(0, 0, 0);
         this.camRadius = 6.34194e10;
         this.minRadius = 8.0e9;
-        this.maxRadius = 1.2e13;
+        this.maxRadius = 1.2e14;
         this.azimuth = 0.0;
         this.elevation = Math.PI / 2.0;
         this.isDragging = false;
@@ -399,7 +399,7 @@ class App {
             this.diskR1 = this.schwarzschildRadius * 2.8;
             this.diskR2 = this.schwarzschildRadius * 8.5;
             this.updateSpacetimeGridMesh();
-            audioEngine.updateMassPitch(v / 100);
+            audioEngine.updateMassPitch(v / 1000);
             document.getElementById('stat-rs').textContent = `${(this.schwarzschildRadius * 1e-6).toFixed(1)} km`;
         }, (v) => `${v.toFixed(1)} M☉`);
 
